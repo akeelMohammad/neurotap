@@ -16,3 +16,16 @@ export function calculateAccuracy(
     (correctAnswers / totalAttempts) * 100
   );
 }
+
+export function calculateAverageReactionTime(
+  reactionTimes: number[]
+): number {
+  if (reactionTimes.length === 0) return 0;
+
+  const total = reactionTimes.reduce(
+    (sum, time) => sum + time,
+    0
+  );
+
+  return Math.round(total / reactionTimes.length);
+}
