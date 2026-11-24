@@ -1,4 +1,5 @@
 
+import { calculateScore, calculateAccuracy } from "./gameLogic";
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -12,9 +13,7 @@ function App() {
   const [attempts, setAttempts] = useState(0);
   const [target, setTarget] = useState(0);
 
-  const accuracy = attempts === 0
-    ? 0
-    : Math.round((score / 10 / attempts) * 100);
+  const accuracy = calculateAccuracy(score / 10, attempts);
 
   function startGame() {
     setTime(30);
@@ -30,8 +29,8 @@ function App() {
     setAttempts(previous => previous + 1);
 
     if (direction === target) {
-      setScore(previous => previous + 10);
-    }
+  setScore(previous => calculateScore(previous, true));
+}
 
     setTarget(previous =>
       (previous + 1 + Math.floor(Math.random() * 3)) % 4
@@ -75,7 +74,7 @@ function App() {
 
   return (
     <main className="game">
-      <h1>🧠 NeuroTap</h1>
+      <h1>NeuroTap</h1>
       <p>Train your hand-eye coordination!</p>
 
       <div className="stats">
