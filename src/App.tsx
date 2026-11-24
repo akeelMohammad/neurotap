@@ -1,6 +1,6 @@
 
 import { calculateScore, calculateAccuracy } from "./gameLogic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 
 const directions = ["↑", "→", "↓", "←"];
@@ -13,8 +13,10 @@ function App() {
   const [attempts, setAttempts] = useState(0);
   const [target, setTarget] = useState(0);
 
+  // Calculate accuracy using our tested game logic
   const accuracy = calculateAccuracy(score / 10, attempts);
 
+  // Start or restart the game
   function startGame() {
     setTime(30);
     setScore(0);
@@ -23,20 +25,26 @@ function App() {
     setPlaying(true);
   }
 
-  function checkAnswer(direction: number) {
-    if (!playing) return;
+  // Check the player's answer
+  const checkAnswer = useCallback(
+    (direction: number) => {
+      if (!playing) return;
 
-    setAttempts(previous => previous + 1);
+      setAttempts(previous => previous + 1);
 
-    if (direction === target) {
-  setScore(previous => calculateScore(previous, true));
-}
+      if (direction === target) {
+        setScore(previous => calculateScore(previous, true));
+      }
 
-    setTarget(previous =>
-      (previous + 1 + Math.floor(Math.random() * 3)) % 4
-    );
-  }
+      // Generate a new direction
+      setTarget(previous =>
+        (previous + 1 + Math.floor(Math.random() * 3)) % 4
+      );
+    },
+    [playing, target]
+  );
 
+  // Countdown timer
   useEffect(() => {
     if (!playing) return;
 
@@ -46,6 +54,7 @@ function App() {
           setPlaying(false);
           return 0;
         }
+
         return previous - 1;
       });
     }, 1000);
@@ -53,6 +62,7 @@ function App() {
     return () => window.clearInterval(timer);
   }, [playing]);
 
+  // Keyboard controls
   useEffect(() => {
     function handleKey(event: KeyboardEvent) {
       if (!playing || event.repeat) return;
@@ -70,7 +80,7 @@ function App() {
     return () => {
       window.removeEventListener("keydown", handleKey);
     };
-  }, [playing, target]);
+  }, [playing, checkAnswer]);
 
   return (
     <main className="game">
@@ -97,18 +107,33 @@ function App() {
 
       <div className="controls">
         <div>
-          <button disabled={!playing} onClick={() => checkAnswer(0)}>
+          <button
+            disabled={!playing}
+            onClick={() => checkAnswer(0)}
+          >
             ↑
           </button>
         </div>
+
         <div>
-          <button disabled={!playing} onClick={() => checkAnswer(3)}>
+          <button
+            disabled={!playing}
+            onClick={() => checkAnswer(3)}
+          >
             ←
           </button>
-          <button disabled={!playing} onClick={() => checkAnswer(2)}>
+
+          <button
+            disabled={!playing}
+            onClick={() => checkAnswer(2)}
+          >
             ↓
           </button>
-          <button disabled={!playing} onClick={() => checkAnswer(1)}>
+
+          <button
+            disabled={!playing}
+            onClick={() => checkAnswer(1)}
+          >
             →
           </button>
         </div>
