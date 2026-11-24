@@ -1,6 +1,11 @@
 
-import { calculateScore, calculateAccuracy } from "./gameLogic";
-import { useCallback, useEffect, useState } from "react";
+import {
+  calculateScore,
+  calculateAccuracy,
+  calculateAverageReactionTime,
+} from "./gameLogic";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const directions = ["↑", "→", "↓", "←"];
@@ -13,33 +18,64 @@ function App() {
   const [attempts, setAttempts] = useState(0);
   const [target, setTarget] = useState(0);
 
-  // Calculate accuracy using our tested game logic
+  // Store reaction times for correct answers
+  const [reactionTimes, setReactionTimes] = useState<number[]>([]);
+
+  // Store the start time without causing re-renders
+  const reactionStartRef = useRef<number>(0);
+
+  // Calculate game statistics
   const accuracy = calculateAccuracy(score / 10, attempts);
+
+  const averageReactionTime =
+    calculateAverageReactionTime(reactionTimes);
 
   // Start or restart the game
   function startGame() {
     setTime(30);
     setScore(0);
     setAttempts(0);
+    setReactionTimes([]);
     setTarget(Math.floor(Math.random() * 4));
+
+    // Begin measuring the first response
+    reactionStartRef.current = performance.now();
+
     setPlaying(true);
   }
 
-  // Check the player's answer
+  // Check the player's answer and measure reaction time
   const checkAnswer = useCallback(
     (direction: number) => {
       if (!playing) return;
 
+      // Measure the elapsed time in milliseconds
+      const responseTime =
+        performance.now() - reactionStartRef.current;
+
+      // Count every attempt
       setAttempts(previous => previous + 1);
 
       if (direction === target) {
-        setScore(previous => calculateScore(previous, true));
+        // Award 10 points for a correct answer
+        setScore(previous =>
+          calculateScore(previous, true)
+        );
+
+        // Store reaction time for correct answers
+        setReactionTimes(previous => [
+          ...previous,
+          responseTime,
+        ]);
       }
 
       // Generate a new direction
       setTarget(previous =>
         (previous + 1 + Math.floor(Math.random() * 3)) % 4
       );
+
+      // Reset the timer for the next arrow
+      reactionStartRef.current = performance.now();
     },
     [playing, target]
   );
@@ -91,6 +127,13 @@ function App() {
         <div>Score: {score}</div>
         <div>Time: {time}s</div>
         <div>Accuracy: {accuracy}%</div>
+
+        <div>
+          Avg. Reaction:{" "}
+          {reactionTimes.length > 0
+            ? `${averageReactionTime} ms`
+            : "—"}
+        </div>
       </div>
 
       <div className="challenge">
